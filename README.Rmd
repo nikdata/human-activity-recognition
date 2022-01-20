@@ -42,23 +42,23 @@ The dataset is available as a compressed `.gz` file and consists of 9 variables 
 
 ## FAQ
 
-**What is the sampling frequency?**
+**1. What is the sampling frequency?**
 
 The sampling frequency of the wearable worn was 25 Hz - meaning that 25 samples (or readings) were collected per second from the accelerometer
 
-**Where does the 15 seconds come from?**
+**2. Where does the 15 seconds come from?**
 
 While the wearable's accelerometer is continuously 'listening' to the motion of the wearer, it was designed to 'start' recording once 2Gs of acceleration was exceeded in either the X, Y, or Z axes. The moment of time that when this threshold is exceeded is at the mid-point. And the wearable 'stores' the previous 7.5 seconds of information and the following 7.5 seconds. Hence, the 15 seconds.
 
-**What is an incident?**
+**3. What is an incident?**
 
 An incident is when the wearable's accelerometer exceeds 2Gs of acceleration in either the X, Y, or Z axes. It is at this moment in time when the wearable will record the previous 7.5 seconds and the following 7.5 seconds. This 15 second data-stream is referred to as an incident and classified as either a slip, trip, fall, or other.
 
-**Where was the wearable worn?**
+**4. Where was the wearable worn?**
 
 This information was not recorded for every wearer. However, all wearers were instructed to wear the wearable on their upper arm (around their biceps) on either their right or left arms.
 
-**Are timestamps available for each incident?**
+**5. Are timestamps available for each incident?**
 
 Sorry, no.
 
