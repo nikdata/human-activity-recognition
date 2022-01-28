@@ -19,7 +19,11 @@ dtype = {
     "z": float,
 }
 
-default_filename = "~/depot/tdm-musafe/data/human-activity-recognition/raw-data/2022_makusafe-purdue-dataset-raw.gz"
+dates = ["occurrence_ts", "confirmation_ts"]
+
+default_filename = (
+    "~/depot/tdm-musafe/data/human-activity-recognition/raw-data/har_raw.gz"
+)
 
 
 def load_data(filename=default_filename):
@@ -90,7 +94,7 @@ def load_data(filename=default_filename):
     [986250 rows x 3 columns]
     """
     try:
-        raw_data = pd.read_csv(filename, dtype=dtype)
+        raw_data = pd.read_csv(filename, dtype=dtype, parse_dates=dates)
     except FileNotFoundError as e:
         if filename == default_filename:
             raise FileNotFoundError(
@@ -99,7 +103,11 @@ def load_data(filename=default_filename):
         else:
             raise e
     incidents = (
-        raw_data[["hash_id", "motion", "incident_id"]].groupby("incident_id").first()
+        raw_data[
+            ["hash_id", "motion", "incident_id", "occurrence_ts", "confirmation_ts"]
+        ]
+        .groupby("incident_id")
+        .first()
     )
     acceleration = raw_data[["incident_id", "milliseconds", "x", "y", "z"]].set_index(
         ["incident_id", "milliseconds"]
