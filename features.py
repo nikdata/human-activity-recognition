@@ -30,7 +30,10 @@ def make_features():
     i, a = load_data()
     m = magnitude(a)
     d = direction(a)
-    feat = [f(magnitude=m, direction=d, incidents=i) for f in feature_generators]
+    feat = [
+        f(magnitude=m, direction=d, incidents=i, acceleration=a)
+        for f in feature_generators
+    ]
     return pd.concat(feat, axis="columns")
 
 
@@ -197,6 +200,20 @@ def time_to_confirmation(incidents, **kwargs):
         incidents["confirmation_ts"] - incidents["occurrence_ts"]
     ) / pd.Timedelta("1s")
     return pd.DataFrame({"seconds to confirmation": seconds})
+
+
+@feature
+def angle_between_incident_and_vertical(acceleration, direction, **kwargs):
+    """
+    We can compare the angle between the triggering jolt (the central peak
+    of the acceleration curve) and the direction of vertical at that time.
+    This is given in radians.
+    """
+    a = acceleration.xs(key=7520, level=1)
+    d = direction.xs(key=7520, level=1)
+    a /= np.linalg.norm(a, axis=1, keepdims=True)
+    angle = np.arccos((a * d).sum(axis=1))
+    return pd.DataFrame({"angle between incident and vertical": angle})
 
 
 @feature
