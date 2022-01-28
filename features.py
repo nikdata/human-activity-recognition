@@ -27,10 +27,10 @@ def make_features():
     Those features which make sense to apply to windows have their column name prepended with
     the window over which they were applied (the endpoints are given, in milliseconds).
     """
-    incidents, acceleration = load_data()
-    m = magnitude(acceleration)
-    d = direction(acceleration)
-    feat = [f(magnitude=m, direction=d) for f in feature_generators]
+    i, a = load_data()
+    m = magnitude(a)
+    d = direction(a)
+    feat = [f(magnitude=m, direction=d, incidents=i) for f in feature_generators]
     return pd.concat(feat, axis="columns")
 
 
@@ -188,7 +188,19 @@ def angle_path(direction, **kwargs):
 
 
 @feature
-def windows(magnitude, direction, n=5, overlap=True):
+def time_to_confirmation(incidents, **kwargs):
+    """
+    How long was it between when the incident occurred and when it was
+    categorized? Here is the answer, in seconds.
+    """
+    seconds = (
+        incidents["confirmation_ts"] - incidents["occurrence_ts"]
+    ) / pd.Timedelta("1s")
+    return pd.DataFrame({"seconds to confirmation": seconds})
+
+
+@feature
+def windows(magnitude, direction, n=5, overlap=True, **kwargs):
     """
     Repeat all the marked features on each of `n` evenly spaced windows.
     If overlap, they are overlapped evenly, like so:
