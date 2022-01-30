@@ -6,7 +6,7 @@ from make_features import make_features
 f = make_features()
 f.to_csv('features.csv')
 
-The module is spolit into three submodules:
+The module is split into three submodules:
 load_data
     Acquire the data set, with correct formatting. This may be helpful
     for other parts of the project as well.
@@ -19,7 +19,7 @@ features
 To contribute, use git to clone the repository into your own directory
 and then use git push to share your commits.
 
-Alden Bradford, January 27 2022
+Alden Bradford, January 30 2022
 """
 from .load_data import load_data
 from .features import make_features
