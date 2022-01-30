@@ -116,12 +116,12 @@ def stillness(magnitude, rest_time=1000, **kwargs):
     >>> print(stillness(m))
                  stillness  middle of stillness
     incident_id
-    0             0.076165                500.0
+    0             0.076165                  0.5
     >>> m.iloc[25:] = 1
     >>> print(stillness(m))
                  stillness  middle of stillness
     incident_id
-    0                  0.0               1500.0
+    0                  0.0                  1.5
     """
     rolling_var = (
         magnitude.groupby("incident_id")
@@ -134,8 +134,8 @@ def stillness(magnitude, rest_time=1000, **kwargs):
     return pd.DataFrame(
         {
             "stillness": rolling_var.min(),
-            "middle of stillness": rolling_var.apply(lambda df: df.argmin()) * 40
-            + rest_time / 2,
+            "middle of stillness": (rolling_var.apply(lambda df: df.argmin()) * 40
+            + rest_time / 2) / 1000,
         }
     )
 
@@ -194,12 +194,12 @@ def angle_path(direction, **kwargs):
 def time_to_confirmation(incidents, **kwargs):
     """
     How long was it between when the incident occurred and when it was
-    categorized? Here is the answer, in seconds.
+    categorized? Here is the answer, in days.
     """
     seconds = (
         incidents["confirmation_ts"] - incidents["occurrence_ts"]
-    ) / pd.Timedelta("1s")
-    return pd.DataFrame({"seconds to confirmation": seconds})
+    ) / pd.Timedelta("1d")
+    return pd.DataFrame({"days to confirmation": seconds})
 
 
 @feature
