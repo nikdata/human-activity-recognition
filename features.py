@@ -16,6 +16,7 @@ Alden Bradford, January 30 2022
 import numpy as np
 import pandas as pd
 from scipy.spatial.distance import pdist
+from scipy.signal import welch
 from .transformations import magnitude, direction
 from .load_data import load_data
 
@@ -138,8 +139,10 @@ def stillness(magnitude, rest_time=1000, **kwargs):
     return pd.DataFrame(
         {
             "stillness": rolling_var.min(),
-            "middle of stillness": (rolling_var.apply(lambda df: df.argmin()) * 40
-            + rest_time / 2) / 1000,
+            "middle of stillness": (
+                rolling_var.apply(lambda df: df.argmin()) * 40 + rest_time / 2
+            )
+            / 1000,
         }
     )
 
@@ -200,9 +203,9 @@ def time_to_confirmation(incidents, **kwargs):
     How long was it between when the incident occurred and when it was
     categorized? Here is the answer, in days.
     """
-    days = (
-        incidents["confirmation_ts"] - incidents["occurrence_ts"]
-    ) / pd.Timedelta("1d")
+    days = (incidents["confirmation_ts"] - incidents["occurrence_ts"]) / pd.Timedelta(
+        "1d"
+    )
     return pd.DataFrame({"days to confirmation": days})
 
 
@@ -220,8 +223,37 @@ def angle_between_incident_and_vertical(acceleration, direction, **kwargs):
     return pd.DataFrame({"angle between incident and vertical": angle})
 
 
+@window
 @feature
-def windows(magnitude, direction, n=5, overlap=True, **kwargs):
+def spectral_power(magnitude, low_threshold=1, high_threshold=3, **kwargs):
+    """
+    Using Welch's method, compute the power density in three parts of the spectrum.
+    This follows the discussion in https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7378757/.
+
+    The thresholds define where we should cut off each pfrequency band, and are measured in hertz.
+    """
+    t = len(magnitude.groupby("milliseconds"))
+    m = magnitude.to_numpy().reshape([-1, t])
+    # This replicates the default behavior, but by making it explicit we eliminate a warning:
+    nperseg = min(t, 256)
+    frequency, power = welch(m, fs=15, scaling="spectrum", nperseg=nperseg)
+    low = power[:, frequency < low_threshold].sum(axis=1)
+    medium = power[:, (low_threshold <= frequency) & (frequency < high_threshold)].sum(
+        axis=1
+    )
+    high = power[:, high_threshold <= frequency].sum(axis=1)
+    return pd.DataFrame(
+        {
+            "low frequency power": low,
+            "medium frequency power": medium,
+            "high frequency power": high,
+        },
+        index=magnitude.groupby("incident_id").first().index,
+    )
+
+
+@feature
+def windows(magnitude, direction, acceleration, n=5, overlap=True, **kwargs):
     """
     Repeat all the marked features on each of `n` evenly spaced windows.
     If overlap, they are overlapped evenly, like so:
@@ -247,7 +279,11 @@ def windows(magnitude, direction, n=5, overlap=True, **kwargs):
     frames = [
         pd.concat(
             [
-                f(magnitude=magnitude[t], direction=direction[t])
+                f(
+                    magnitude=magnitude[t],
+                    direction=direction[t],
+                    acceleration=acceleration[t],
+                )
                 for f in window_features
             ],
             axis="columns",
