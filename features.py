@@ -196,10 +196,10 @@ def time_to_confirmation(incidents, **kwargs):
     How long was it between when the incident occurred and when it was
     categorized? Here is the answer, in days.
     """
-    seconds = (
+    days = (
         incidents["confirmation_ts"] - incidents["occurrence_ts"]
     ) / pd.Timedelta("1d")
-    return pd.DataFrame({"days to confirmation": seconds})
+    return pd.DataFrame({"days to confirmation": days})
 
 
 @feature
