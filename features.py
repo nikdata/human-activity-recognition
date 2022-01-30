@@ -1,12 +1,16 @@
 """
-Generate single-variable features based on transformations of the data.
+Generate real-number features.
 
-To make a new feature, just add a function here with the decoration @function,
-which takes in the magnitude and direction data frames, and produces a data frame
-containing the (named) features. If it makes sense to break up that feature by windows,
-add the decorator @window.
+The list of features is automatically generated using function decorators.
 
-Alden Bradford, January 27 2022
+To make a new feature, simply write a function which produces a data frame,
+with the columns as labeled features and the rows as incidents indexed by id.
+Then give it the decorator @feature, and if it makes sense to apply the feature
+to a window, give it the decorator @window. Every feature must be able to accept
+every part of the data, even those which it does not use -- the easiest way to
+do this is to give it the argument **kwargs as a catch-all.
+
+Alden Bradford, January 30 2022
 """
 
 import numpy as np
