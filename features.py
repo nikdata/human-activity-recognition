@@ -67,7 +67,7 @@ def simple_stats(magnitude, **kwargs):
     >>> m = pd.Series(np.linspace(0.8, 1.2, 40)**2, index = index)
     >>> print(simple_stats(m))
                   maximum   minimum      mean  variance      skew  kurtosis
-    incident_id
+    incident_id                                                            
     0            0.796213  0.640000  0.716844  0.002762  0.048027 -1.197775
     1            0.989770  0.814622  0.900934  0.003472  0.042838 -1.198230
     2            1.204366  1.010283  1.106062  0.004264  0.038660 -1.198558
@@ -120,12 +120,12 @@ def stillness(magnitude, rest_time=1000, **kwargs):
     >>> m = pd.Series(np.linspace(0, 1)**2, index = index)
     >>> print(stillness(m))
                  stillness  middle of stillness
-    incident_id
+    incident_id                                
     0             0.076165                  0.5
     >>> m.iloc[25:] = 1
     >>> print(stillness(m))
                  stillness  middle of stillness
-    incident_id
+    incident_id                                
     0                  0.0                  1.5
     """
     rolling_var = (
@@ -178,7 +178,7 @@ def angle_path(direction, **kwargs):
     >>> d = pd.DataFrame(np.eye(3), index = index)
     >>> print(angle_path(d))
                  angular path length  biggest angle difference
-    incident_id
+    incident_id                                               
     0                       3.141593                  1.570796
     """
     index = direction.groupby("incident_id").first().index
