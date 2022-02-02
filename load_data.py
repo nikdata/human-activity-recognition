@@ -48,38 +48,12 @@ def load_data(filename=default_filename):
     Examples
     --------
     >>> incidents, acceleration = load_data()
-    >>> incidents
-                                          hash_id  ...           confirmation_ts
-    incident_id                                    ...                          
-    729353       0c96025713b01a04beff5193cbf7d76d  ... 2020-10-29 08:28:48+00:00
-    729389       0c96025713b01a04beff5193cbf7d76d  ... 2020-10-29 08:33:32+00:00
-    729405       0c96025713b01a04beff5193cbf7d76d  ... 2020-10-28 23:11:05+00:00
-    730067       0c96025713b01a04beff5193cbf7d76d  ... 2020-10-29 22:45:21+00:00
-    730071       0c96025713b01a04beff5193cbf7d76d  ... 2020-10-30 08:33:57+00:00
-    ...                                       ...  ...                       ...
-    10333264     a2845cf621b2c5d99603722839247eb6  ... 2022-01-20 13:35:46+00:00
-    10333546     5677e1b83984ef28263641675407c914  ... 2022-01-20 13:47:15+00:00
-    10333611     a2845cf621b2c5d99603722839247eb6  ... 2022-01-20 13:35:07+00:00
-    10344286     3c2f5925dd72cb7982b6fa1efe062dcc  ... 2022-01-20 17:00:31+00:00
-    10356133     0c96025713b01a04beff5193cbf7d76d  ... 2022-01-21 13:34:11+00:00
-    <BLANKLINE>
-    [2770 rows x 4 columns]
-    >>> acceleration
-                                 x     y     z
-    incident_id milliseconds                  
-    7543315     40           -0.21  0.68  0.41
-                80           -0.10  0.55  0.41
-                120          -0.06  0.55  0.46
-                160          -0.15  0.73  0.54
-                200          -0.09  0.75  0.60
-    ...                        ...   ...   ...
-    7585893     14840        -0.48  0.36  0.73
-                14880        -0.48  0.41  0.75
-                14920        -0.45  0.42  0.80
-                14960        -0.45  0.45  0.80
-                15000        -0.39  0.39  0.82
-    <BLANKLINE>
-    [1038750 rows x 3 columns]
+    >>> list(incidents)
+    ['hash_id', 'motion', 'occurrence_ts', 'confirmation_ts']
+    >>> list(acceleration)
+    ['x', 'y', 'z']
+    >>> list(acceleration.index.names)
+    ['incident_id', 'milliseconds']
     """
     raw_data = pd.read_csv(filename, dtype=dtype, parse_dates=dates)
     incidents = (
