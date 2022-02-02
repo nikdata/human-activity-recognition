@@ -22,7 +22,7 @@ dtype = {
 dates = ["occurrence_ts", "confirmation_ts"]
 
 default_filename = (
-    "~/depot/tdm-musafe/data/human-activity-recognition/raw-data/har_raw.gz"
+    "/depot/tdm-musafe/data/human-activity-recognition/raw-data/har_raw.gz"
 )
 
 
@@ -35,12 +35,6 @@ def load_data(filename=default_filename):
     however, within a process, it is better to keep the frame in memory
     (it should be stored as a variable)
 
-    The default filename uses a symlink which should be in your home directory.
-    You can set that up by running the following block of code in a Jupyter notebook:
-
-    %%bash
-    ln -s /depot $HOME/depot
-
     Parameters
     ----------
     filename : str, optional
@@ -50,12 +44,6 @@ def load_data(filename=default_filename):
     -------
     incidents : DataFrame
     acceleration: DataFrame
-
-    Raises
-    ------
-    FileNotFoundError
-        If the data file is inaccessible. Gives a special message if the filename is the default, since this
-        probably indicates the symlink was not configured correctly.
 
     Examples
     --------
@@ -93,15 +81,7 @@ def load_data(filename=default_filename):
     <BLANKLINE>
     [986250 rows x 3 columns]
     """
-    try:
-        raw_data = pd.read_csv(filename, dtype=dtype, parse_dates=dates)
-    except FileNotFoundError as e:
-        if filename == default_filename:
-            raise FileNotFoundError(
-                "It looks like you don't have the symbolic link to the file directory configured correctly. You need to run the following command to set that up: \nln -s /depot $HOME/depot"
-            )
-        else:
-            raise e
+    raw_data = pd.read_csv(filename, dtype=dtype, parse_dates=dates)
     incidents = (
         raw_data[
             ["hash_id", "motion", "incident_id", "occurrence_ts", "confirmation_ts"]
