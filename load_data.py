@@ -88,5 +88,5 @@ def load_data(filename=default_filename, drop_batches=True, drop_early=True):
     # remove those categories
     incidents = incidents[mask]
     for col in 'hash_id', "motion":
-        incidents[col] = incidents[col].remove_unused_categories()
+        incidents[col] = incidents[col].cat.remove_unused_categories()
     return incidents, acceleration.loc[mask[mask].index]
