@@ -15,6 +15,7 @@ Alden Bradford, January 27 2022
 import numpy as np
 import pandas as pd
 from scipy import signal
+from sklearn.cluster import DBSCAN
 
 
 def direction(acceleration, frequency_cutoff=0.2, filter_order=8):
@@ -83,6 +84,57 @@ def magnitude(acceleration):
         name="acceleration magnitude",
     )
 
+
+def _batch_employer(incidents, max_gap, min_size, age_threshold):
+    """
+    This should only be called by batch, which is responsible for ensuring incidents
+    from separate employers are not treated as part of the same batch.
+    """
+    times = incidents['confirmation_ts']
+    t = ((times-times.min())/pd.Timedelta(max_gap)).to_numpy().reshape([-1,1])
+    # the DBSCAN algorithm does everything we want except for requiring at least one old observation.
+    # See its documentation for details.
+    labels = DBSCAN(eps=1, min_samples=min_size).fit_predict(t)
+    groups = pd.Series(labels, index = times.index, name='batch')
+    # remove those batches which do not have an old representative.
+    for label in range(labels.max(), -1, -1):
+        i = incidents[groups == label]
+        age = (i['confirmation_ts']-i['occurrence_ts']).max()
+        if age < pd.Timedelta(age_threshold):
+            groups[groups == label] = -1
+            # shift the labels above this one to fill the gap
+            groups[groups > label] -= 1
+    return groups
+
+
+def batch(incidents, max_gap = '30m', min_size = 2, age_threshold = '8h'):
+    """
+    We can see from the confirmation versus occurrence times that some employers are
+    doing their labeling in batches. We should be able to reconstruct this behavior from
+    the data.
+    
+    For these purposes, a batch is a subset of incidents satisfying the following axioms:
+    - batches can only contain points from one employer.
+    - a batch cannot be a subset of a batch; that is, batches are as large as possible with respect to
+      the other axioms.
+    - the time between consecutive classifications for a batch must be no more than 30 minutes
+    - at least one incident in a batch must be at least 8 hours old at time of classification
+    - there must be at least two points in a batch.
+    
+    This function identifies all batches and assigns each batch an arbitrary number, starting with zero.
+    If a point does not belong to a batch, it is given the batch number -1.
+    Batch numbers are repeated between employers, so several employers will have batch number 1, for example.
+    
+    For an explanation of why we would want to treat batched data differently, see:
+    /depot/tdm-musafe/etc/batch_demo.ipynb
+    """
+    return (incidents
+        .groupby('hash_id')
+        .apply(lambda df: _batch_employer(df, max_gap=max_gap, min_size=min_size, age_threshold=age_threshold))
+        .droplevel(0)
+        .reindex_like(incidents)
+        .rename('batch')
+    )
 
 if __name__ == "__main__":
     import doctest
