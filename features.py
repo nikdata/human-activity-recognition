@@ -310,8 +310,7 @@ def windows(magnitude, direction, acceleration, n=5, overlap=True, **kwargs):
     ]
     for (tmin, tmax), frame in zip(endpoints, frames):
         frame.rename(
-            mapper=lambda name: f"window {tmin}:{tmax} {name}",
-            axis="columns",
+            columns=lambda name: f"window {tmin}:{tmax} {name}",
             inplace=True,
         )
     return pd.concat(frames, axis="columns")
