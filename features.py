@@ -89,6 +89,22 @@ def simple_stats(magnitude, **kwargs):
     )
 
 
+@window
+@feature
+def average_direction(acceleration, **kwargs):
+    """
+    This is just the average values of x, y, and z. Since we are doing an average over many samples,
+    it makes more sense to compute this directly than to use the direction transfomration
+    (the noise will be reduced).
+    """
+    return (acceleration
+        .groupby('incident_id')
+        .mean()
+        .rename(columns = lambda s: f'mean {s}')
+    )
+    
+
+
 @feature
 def stillness(magnitude, rest_time=1000, **kwargs):
     """
