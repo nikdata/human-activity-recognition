@@ -83,4 +83,10 @@ def load_data(filename=default_filename, drop_batches=True, drop_early=True):
         mask &= incidents['occurrence_ts'] > pd.Timestamp('November 30 2020', tz=0)
     if drop_batches:
         mask &= batch(incidents) == -1
-    return incidents[mask], acceleration.loc[mask[mask].index]
+        
+    # we may have lost all the representatives of some categories, so we had better
+    # remove those categories
+    incidents = incidents[mask]
+    for col in 'hash_id', "motion":
+        incidents[col] = incidents[col].remove_unused_categories()
+    return incidents, acceleration.loc[mask[mask].index]
