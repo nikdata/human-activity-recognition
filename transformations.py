@@ -107,7 +107,7 @@ def _batch_employer(incidents, max_gap, min_size, age_threshold):
     return groups
 
 
-def batch(incidents, max_gap = '30m', min_size = 2, age_threshold = '8h'):
+def batch(incidents, max_gap = '5m', min_size = 2, age_threshold = '8h'):
     """
     We can see from the confirmation versus occurrence times that some employers are
     doing their labeling in batches. We should be able to reconstruct this behavior from
@@ -117,7 +117,7 @@ def batch(incidents, max_gap = '30m', min_size = 2, age_threshold = '8h'):
     - batches can only contain points from one employer.
     - a batch cannot be a subset of a batch; that is, batches are as large as possible with respect to
       the other axioms.
-    - the time between consecutive classifications for a batch must be no more than 30 minutes
+    - the time between consecutive classifications for a batch must be no more than 5 minutes
     - at least one incident in a batch must be at least 8 hours old at time of classification
     - there must be at least two points in a batch.
     
