@@ -6,6 +6,7 @@ Alden Bradford, January 27 2022
 
 
 import pandas as pd
+from .transformations import batch
 
 dtype = {
     "incident_id": int,
@@ -26,7 +27,7 @@ default_filename = (
 )
 
 
-def load_data(filename=default_filename):
+def load_data(filename=default_filename, drop_batches=True, drop_early=True):
     """Load the makusafe data and make them available as DataFrames.
 
     In order to keep the data in third normal form (without redundant columns),
@@ -37,12 +38,21 @@ def load_data(filename=default_filename):
 
     Parameters
     ----------
-    filename : str, optional
+    filename: str, optional
         The name of the file from which to load the data.
+        
+    drop_batches: bool, optional
+        if True, give a reduced data set with only those points whose classification
+        was not part of a batch.
+        
+    drop_early: bool, optional
+        if True, give a reduced data set with only those points which occurred after
+        November 30, 2020. Data points before this time have a distinctly different character,
+        as employers were still learning how the system worked at that time.
 
     Returns
     -------
-    incidents : DataFrame
+    incidents: DataFrame
     acceleration: DataFrame
 
     Examples
@@ -66,10 +76,11 @@ def load_data(filename=default_filename):
     acceleration = raw_data[["incident_id", "milliseconds", "x", "y", "z"]].set_index(
         ["incident_id", "milliseconds"]
     )
-    return incidents, acceleration
-
-
-if __name__ == "__main__":
-    import doctest
-
-    doctest.testmod()
+    
+    # get a true array to use as a mask
+    mask = incidents['hash_id'].apply(lambda x: True)
+    if drop_early:
+        mask &= incidents['occurrence_ts'] > pd.Timestamp('November 30 2020', tz=0)
+    if drop_batches:
+        mask &= batch(incidents) == -1
+    return incidents[mask], acceleration.loc[mask[mask].index]
