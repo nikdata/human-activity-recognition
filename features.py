@@ -102,6 +102,16 @@ def average_direction(acceleration, **kwargs):
         .mean()
         .rename(columns = lambda s: f'mean {s}')
     )
+
+@feature
+def peak_direction(acceleration, **kwargs):
+    """
+    Since the central peak is of a large magnitude, we can figure out its direction in the device's own coordinate system.
+    """
+    return (acceleration
+        .xs(key=7520, level=1)
+        .rename(columns = lambda s: f'peak {s}')
+    )
     
 
 
