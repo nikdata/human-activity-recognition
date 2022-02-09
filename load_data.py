@@ -5,6 +5,7 @@ Alden Bradford, January 27 2022
 """
 
 
+import numpy as np
 import pandas as pd
 import pickle
 from .transformations import batch
@@ -84,19 +85,22 @@ def load_data(filename=default_filename, *, drop_batches=True, drop_early=True, 
         acceleration = raw_data[["incident_id", "milliseconds", "x", "y", "z"]].set_index(
             ["incident_id", "milliseconds"]
         )
+        earlymask = incidents['occurrence_ts'] > pd.Timestamp('November 30 2020', tz=0)
+        batchmask = batch(incidents) == -1
+        
         with open(cache_file, 'wb') as f:
-            pickle.dump((incidents, acceleration), f)
+            pickle.dump((incidents, acceleration, earlymask, batchmask), f)
     else:
         with open(cache_file, 'rb') as f:
-            incidents, acceleration = pickle.load(f)
+            incidents, acceleration, earlymask, batchmask = pickle.load(f)
         
     
     # get a true array to use as a mask
-    mask = incidents['hash_id'].apply(lambda x: True)
+    mask = pd.Series(np.ones(len(incidents), dtype=bool), index=incidents.index)
     if drop_early:
-        mask &= incidents['occurrence_ts'] > pd.Timestamp('November 30 2020', tz=0)
+        mask &= earlymask
     if drop_batches:
-        mask &= batch(incidents) == -1
+        mask &= batchmask
         
     # we may have lost all the representatives of some categories, so we had better
     # remove those categories
