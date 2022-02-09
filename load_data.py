@@ -6,6 +6,7 @@ Alden Bradford, January 27 2022
 
 
 import pandas as pd
+import pickle
 from .transformations import batch
 
 dtype = {
@@ -26,8 +27,10 @@ default_filename = (
     "/depot/tdm-musafe/data/human-activity-recognition/raw-data/har_raw.gz"
 )
 
+cache_file = "/depot/tdm-musafe/data/cache.pickle"
 
-def load_data(filename=default_filename, drop_batches=True, drop_early=True):
+
+def load_data(filename=default_filename, *, drop_batches=True, drop_early=True, redo_cache=False):
     """Load the makusafe data and make them available as DataFrames.
 
     In order to keep the data in third normal form (without redundant columns),
@@ -49,6 +52,10 @@ def load_data(filename=default_filename, drop_batches=True, drop_early=True):
         if True, give a reduced data set with only those points which occurred after
         November 30, 2020. Data points before this time have a distinctly different character,
         as employers were still learning how the system worked at that time.
+        
+    redo_cache: bool, optional
+        By default the data is loaded from a cache. If redo_cache is set, then we will write
+        to the cache instead.
 
     Returns
     -------
@@ -65,17 +72,24 @@ def load_data(filename=default_filename, drop_batches=True, drop_early=True):
     >>> list(acceleration.index.names)
     ['incident_id', 'milliseconds']
     """
-    raw_data = pd.read_csv(filename, dtype=dtype, parse_dates=dates)
-    incidents = (
-        raw_data[
-            ["hash_id", "motion", "incident_id", "occurrence_ts", "confirmation_ts"]
-        ]
-        .groupby("incident_id")
-        .first()
-    )
-    acceleration = raw_data[["incident_id", "milliseconds", "x", "y", "z"]].set_index(
-        ["incident_id", "milliseconds"]
-    )
+    if redo_cache:
+        raw_data = pd.read_csv(filename, dtype=dtype, parse_dates=dates)
+        incidents = (
+            raw_data[
+                ["hash_id", "motion", "incident_id", "occurrence_ts", "confirmation_ts"]
+            ]
+            .groupby("incident_id")
+            .first()
+        )
+        acceleration = raw_data[["incident_id", "milliseconds", "x", "y", "z"]].set_index(
+            ["incident_id", "milliseconds"]
+        )
+        with open(cache_file, 'wb') as f:
+            pickle.dump((incidents, acceleration), f)
+    else:
+        with open(cache_file, 'rb') as f:
+            incidents, acceleration = pickle.load(f)
+        
     
     # get a true array to use as a mask
     mask = incidents['hash_id'].apply(lambda x: True)
