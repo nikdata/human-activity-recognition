@@ -31,7 +31,7 @@ default_filename = (
 cache_file = "/depot/tdm-musafe/data/cache.pickle"
 
 
-def load_data(filename=default_filename, *, drop_batches=True, drop_early=True, redo_cache=False):
+def load_data(filename=default_filename, *, drop_batches=True, drop_early=True, redo_cache=False, include_features=False):
     """Load the makusafe data and make them available as DataFrames.
 
     In order to keep the data in third normal form (without redundant columns),
@@ -57,6 +57,9 @@ def load_data(filename=default_filename, *, drop_batches=True, drop_early=True, 
     redo_cache: bool, optional
         By default the data is loaded from a cache. If redo_cache is set, then we will write
         to the cache instead.
+        
+    include_features: bool, optional
+        Include the features from the cache, with index aligned to the data chosen.
 
     Returns
     -------
@@ -107,4 +110,9 @@ def load_data(filename=default_filename, *, drop_batches=True, drop_early=True, 
     incidents = incidents[mask]
     for col in 'hash_id', "motion":
         incidents[col] = incidents[col].cat.remove_unused_categories()
-    return incidents, acceleration.loc[mask[mask].index]
+    acceleration = acceleration.loc[mask[mask].index]
+    if include_features:
+        features = pd.read_csv('/depot/tdm-musafe/data/features.csv', index_col = 'incident_id')[mask]
+        return incidents, acceleration, features
+    else:
+        return incidents, acceleration
