@@ -81,12 +81,27 @@ def simple_stats(magnitude, **kwargs):
         {
             "maximum": group.max(),
             "minimum": group.min(),
+            "range": group.apply(np.ptp),
             "mean": group.mean(),
+            "standard deviation": group.std(),
             "variance": group.var(),
             "skew": group.skew(),
             "kurtosis": group.apply(lambda df: df.kurtosis()),
         }
     )
+
+
+@window
+@feature
+def total_variation(magnitude, **kwargs):
+    """
+    This feature was used in https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8272179/
+    """
+    return pd.DataFrame(
+    {"total variation": magnitude
+        .groupby("incident_id")
+        .apply(lambda df: df.diff().abs().sum())
+    })
 
 
 @window
@@ -102,6 +117,7 @@ def average_direction(acceleration, **kwargs):
         .mean()
         .rename(columns = lambda s: f'mean {s}')
     )
+
 
 @feature
 def peak_direction(acceleration, **kwargs):
