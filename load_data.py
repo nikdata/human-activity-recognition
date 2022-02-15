@@ -90,6 +90,9 @@ def load_data(filename=default_filename, *, drop_batches=True, drop_early=False,
         earlymask = incidents['occurrence_ts'] > pd.Timestamp('November 30 2020', tz=0)
         batchmask = batch(incidents) == -1
         
+        # these dates are unreliable, and should not be used.
+        incidents.loc[~earlymask, ['occurrence_ts', 'confirmation_ts']] = np.nan
+        
         with open(cache_file, 'wb') as f:
             pickle.dump((incidents, acceleration, earlymask, batchmask), f)
     else:
