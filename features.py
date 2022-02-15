@@ -270,7 +270,7 @@ def spectral_power(magnitude, low_threshold=1, high_threshold=3, **kwargs):
     Using Welch's method, compute the power density in three parts of the spectrum.
     This follows the discussion in https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7378757/.
 
-    The thresholds define where we should cut off each pfrequency band, and are measured in hertz.
+    The thresholds define where we should cut off each frequency band, and are measured in hertz.
     """
     t = len(magnitude.groupby("milliseconds"))
     m = magnitude.to_numpy().reshape([-1, t])
