@@ -26,15 +26,23 @@ feature_generators = []
 window_features = []
 
 
-def make_features(*args, **kwargs):
+def make_features(*args, use_data=None,  **kwargs):
     """make every feature available as a data frame. This may take a while to run.
 
     Those features which make sense to apply to windows have their column name prepended with
     the window over which they were applied (the endpoints are given, in milliseconds).
     
-    Parameters are passed to load_data.
+    Parameters are passed to load_data, except:
+    
+    Parameters
+    ----------
+    use_data: optional, (incidents, acceleration) or None
+        optionally pass the data set to use directly.
     """
-    i, a = load_data(*args, **kwargs)
+    if use_data is None:
+        i, a = load_data(*args, **kwargs)
+    else:
+        i, a = use_data
     m = magnitude(a)
     d = direction(a)
     feat = [

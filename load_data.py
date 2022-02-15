@@ -31,7 +31,7 @@ default_filename = (
 cache_file = "/depot/tdm-musafe/data/cache.pickle"
 
 
-def load_data(filename=default_filename, *, drop_batches=True, drop_early=False, redo_cache=False, include_features=False):
+def load_data(filename=default_filename, *, drop_batches=True, drop_early=False, redo_cache=False, no_cache=False, include_features=False):
     """Load the makusafe data and make them available as DataFrames.
 
     In order to keep the data in third normal form (without redundant columns),
@@ -57,6 +57,9 @@ def load_data(filename=default_filename, *, drop_batches=True, drop_early=False,
         By default the data is loaded from a cache. If redo_cache is set, then we will write
         to the cache instead.
         
+    no_cache: bool, optional
+        don't interact with the cache at all.
+        
     include_features: bool, optional
         Include the features from the cache, with index aligned to the data chosen.
 
@@ -75,7 +78,7 @@ def load_data(filename=default_filename, *, drop_batches=True, drop_early=False,
     >>> list(acceleration.index.names)
     ['incident_id', 'milliseconds']
     """
-    if redo_cache:
+    if redo_cache or no_cache:
         raw_data = pd.read_csv(filename, dtype=dtype, parse_dates=dates)
         incidents = (
             raw_data[
@@ -93,8 +96,9 @@ def load_data(filename=default_filename, *, drop_batches=True, drop_early=False,
         # these dates are unreliable, and should not be used.
         incidents.loc[~earlymask, ['occurrence_ts', 'confirmation_ts']] = np.nan
         
-        with open(cache_file, 'wb') as f:
-            pickle.dump((incidents, acceleration, earlymask, batchmask), f)
+        if not no_cache:
+            with open(cache_file, 'wb') as f:
+                pickle.dump((incidents, acceleration, earlymask, batchmask), f)
     else:
         with open(cache_file, 'rb') as f:
             incidents, acceleration, earlymask, batchmask = pickle.load(f)
