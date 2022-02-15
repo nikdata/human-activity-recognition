@@ -76,12 +76,12 @@ def simple_stats(magnitude, **kwargs):
     >>> index = pd.MultiIndex.from_product([range(4), range(10)], names = ['incident_id', 'milliseconds'])
     >>> m = pd.Series(np.linspace(0.8, 1.2, 40)**2, index = index)
     >>> print(simple_stats(m))
-                  maximum   minimum      mean  variance      skew  kurtosis
-    incident_id                                                            
-    0            0.796213  0.640000  0.716844  0.002762  0.048027 -1.197775
-    1            0.989770  0.814622  0.900934  0.003472  0.042838 -1.198230
-    2            1.204366  1.010283  1.106062  0.004264  0.038660 -1.198558
-    3            1.440000  1.226982  1.332229  0.005136  0.035225 -1.198803
+                  maximum   minimum     range      mean  standard deviation  variance      skew  kurtosis
+    incident_id                                                                                          
+    0            0.796213  0.640000  0.156213  0.716844            0.052557  0.002762  0.048027 -1.197775
+    1            0.989770  0.814622  0.175148  0.900934            0.058926  0.003472  0.042838 -1.198230
+    2            1.204366  1.010283  0.194083  1.106062            0.065296  0.004264  0.038660 -1.198558
+    3            1.440000  1.226982  0.213018  1.332229            0.071665  0.005136  0.035225 -1.198803
 
     """
     group = magnitude.groupby("incident_id")
