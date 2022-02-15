@@ -31,7 +31,7 @@ default_filename = (
 cache_file = "/depot/tdm-musafe/data/cache.pickle"
 
 
-def load_data(filename=default_filename, *, drop_batches=True, drop_early=True, redo_cache=False, include_features=False):
+def load_data(filename=default_filename, *, drop_batches=True, drop_early=False, redo_cache=False, include_features=False):
     """Load the makusafe data and make them available as DataFrames.
 
     In order to keep the data in third normal form (without redundant columns),
@@ -51,8 +51,7 @@ def load_data(filename=default_filename, *, drop_batches=True, drop_early=True, 
         
     drop_early: bool, optional
         if True, give a reduced data set with only those points which occurred after
-        November 30, 2020. Data points before this time have a distinctly different character,
-        as employers were still learning how the system worked at that time.
+        November 30, 2020. These are missing their time information.
         
     redo_cache: bool, optional
         By default the data is loaded from a cache. If redo_cache is set, then we will write
