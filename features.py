@@ -36,17 +36,17 @@ def make_features(*args, use_data=None,  **kwargs):
     
     Parameters
     ----------
-    use_data: optional, (incidents, acceleration) or None
-        optionally pass the data set to use directly.
+    use_acceleration: optional, acceleration or None
+        optionally pass the accekeration data to use directly.
     """
     if use_data is None:
         i, a = load_data(*args, **kwargs)
     else:
-        i, a = use_data
+        a = use_data
     m = magnitude(a)
     d = direction(a)
     feat = [
-        f(magnitude=m, direction=d, incidents=i, acceleration=a)
+        f(magnitude=m, direction=d, acceleration=a)
         for f in feature_generators
     ]
     return pd.concat(feat, axis="columns")
@@ -265,7 +265,7 @@ def angle_between_incident_and_vertical(acceleration, direction, **kwargs):
 
 @window
 @feature
-def spectral_power(magnitude, low_threshold=1, high_threshold=3, **kwargs):
+def spectral_power(magnitude, low_threshold=0.5, high_threshold=2, **kwargs):
     """
     Using Welch's method, compute the power density in three parts of the spectrum.
     This follows the discussion in https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7378757/.
@@ -276,7 +276,7 @@ def spectral_power(magnitude, low_threshold=1, high_threshold=3, **kwargs):
     m = magnitude.to_numpy().reshape([-1, t])
     # This replicates the default behavior, but by making it explicit we eliminate a warning:
     nperseg = min(t, 256)
-    frequency, power = welch(m, fs=15, scaling="spectrum", nperseg=nperseg)
+    frequency, power = welch(m, fs=25, scaling="spectrum", nperseg=nperseg)
     low = power[:, frequency < low_threshold].sum(axis=1)
     medium = power[:, (low_threshold <= frequency) & (frequency < high_threshold)].sum(
         axis=1
