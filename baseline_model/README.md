@@ -9,3 +9,5 @@ The models we demonstrate are:
 All three use the same pre-scaled version of the data, where the means and veariances of each feature are set to 0 and 1 respectively.
 
 The models were compared using stratified 5-fold cross validation. We used a stratified version in order to eliminate the chance of a training set having very few positive samples. Evaluating them based on the precision (the positive predictive value), we found that Gaussian Naive Bayes was most consistent, giving a precision around 10%. The K Neighbors method did the best on average, with a precision of at least 20% in each of the 5 trials. The decision tree method had highly variable behavior; in one trial it achieved 45% precision and in another it achieved only 7%.
+
+The features are all defined in the file `make_features/features.py`, in the docstring for each function. Every attempt has been made to be clear about what each feature may represent, but in case it is unclear we can certainly elaborate.
