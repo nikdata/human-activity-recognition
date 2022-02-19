@@ -239,6 +239,10 @@ def angle_path(direction, **kwargs):
     d = direction.to_numpy().reshape([len(index), -1, 3])
 
     inner = (d[:, 1:, :] * d[:, :-1, :]).sum(axis=2)
+    # due to floating point error, we may be out of bounds.
+    inner = np.maximum(inner, -1)
+    inner = np.minimum(inner, 1)
+    
     path_length = pd.Series(np.arccos(inner).sum(axis=1), index=index)
 
     biggest_angle = pd.Series(
