@@ -43,6 +43,8 @@ def make_features(*args, use_data=None,  **kwargs):
         i, a = load_data(*args, **kwargs)
     else:
         a = use_data
+    # look only at the previous and future 4 seconds
+    a = a[ abs(a.index.droplevel(0)) <= 4000 ]
     m = magnitude(a)
     d = direction(a)
     feat = [
@@ -133,7 +135,7 @@ def peak_direction(acceleration, **kwargs):
     Since the central peak is of a large magnitude, we can figure out its direction in the device's own coordinate system.
     """
     return (acceleration
-        .xs(key=7520, level=1)
+        .xs(key=0, level=1)
         .rename(columns = lambda s: f'peak {s}')
     )
     
@@ -256,8 +258,8 @@ def angle_between_incident_and_vertical(acceleration, direction, **kwargs):
     of the acceleration curve) and the direction of vertical at that time.
     This is given in radians.
     """
-    a = acceleration.xs(key=7520, level=1)
-    d = direction.xs(key=7520, level=1)
+    a = acceleration.xs(key=0, level=1)
+    d = direction.xs(key=0, level=1)
     a /= np.linalg.norm(a, axis=1, keepdims=True)
     angle = np.arccos((a * d).sum(axis=1))
     return pd.DataFrame({"angle between incident and vertical": angle})
@@ -293,28 +295,14 @@ def spectral_power(magnitude, low_threshold=0.5, high_threshold=2, **kwargs):
 
 
 @feature
-def windows(magnitude, direction, acceleration, n=5, overlap=True, **kwargs):
+def windows(magnitude, direction, acceleration, bounds = [-4000, -1000, 1040, 4040], **kwargs):
     """
-    Repeat all the marked features on each of `n` evenly spaced windows.
-    If overlap, they are overlapped evenly, like so:
-
-        |-------|-------|-------|
-            |-------|-------|
-
-    The resulting frames are tagged by their end points, with the lower
-    left endtime noninclusive. This matches the convention that the first
-    measurement is given time 40 milliseconds.
+    Repeat all marked features across the three windows (before, during, and after).
     """
     milliseconds = magnitude.index.to_frame()["milliseconds"]
-    if overlap:
-        step = 15000 // (n + 1)
-        size = step * 2
-    else:
-        step = 15000 // n
-        size = step
-    endpoints = [(a := step * i, a + size) for i in range(n)]
+    endpoints = [bounds[i, i+2] for i in range(3)]
     times = [
-        (milliseconds > tmin) & (milliseconds <= tmax) for (tmin, tmax) in endpoints
+        (milliseconds >= tmin) & (milliseconds < tmax) for (tmin, tmax) in endpoints
     ]
     frames = [
         pd.concat(
@@ -330,9 +318,9 @@ def windows(magnitude, direction, acceleration, n=5, overlap=True, **kwargs):
         )
         for t in times
     ]
-    for (tmin, tmax), frame in zip(endpoints, frames):
+    for windowname, frame in zip(['before', 'during', 'after'], frames):
         frame.rename(
-            columns=lambda name: f"window {tmin}:{tmax} {name}",
+            columns=lambda name: f"window {windowname} {name}",
             inplace=True,
         )
     return pd.concat(frames, axis="columns")

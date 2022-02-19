@@ -80,6 +80,7 @@ def load_data(filename=default_filename, *, drop_batches=True, drop_early=False,
     """
     if redo_cache or no_cache:
         raw_data = pd.read_csv(filename, dtype=dtype, parse_dates=dates)
+        raw_data['milliseconds'] -= 7520
         incidents = (
             raw_data[
                 ["hash_id", "motion", "incident_id", "occurrence_ts", "confirmation_ts"]
