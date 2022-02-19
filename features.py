@@ -300,7 +300,7 @@ def windows(magnitude, direction, acceleration, bounds = [-4000, -1000, 1040, 40
     Repeat all marked features across the three windows (before, during, and after).
     """
     milliseconds = magnitude.index.to_frame()["milliseconds"]
-    endpoints = [bounds[i, i+2] for i in range(3)]
+    endpoints = [bounds[i:i+2] for i in range(3)]
     times = [
         (milliseconds >= tmin) & (milliseconds < tmax) for (tmin, tmax) in endpoints
     ]
