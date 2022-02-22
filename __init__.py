@@ -22,4 +22,4 @@ and then use git push to share your commits.
 Alden Bradford, January 30 2022
 """
 from .load_data import load_data
-from .features import make_features
+from .features import make_features, make_undirected
