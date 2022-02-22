@@ -347,20 +347,20 @@ def windows(magnitude, direction, acceleration, n=5, overlap=True, **kwargs):
         |-------|-------|-------|
             |-------|-------|
 
-    The resulting frames are tagged by their end points, with the lower
-    left endtime noninclusive. This matches the convention that the first
-    measurement is given time 40 milliseconds.
+    The resulting frames are tagged by their end points, with the
+    upper endtime noninclusive.
     """
     milliseconds = magnitude.index.to_frame()["milliseconds"]
+    first_time = milliseconds.min()
     if overlap:
         step = 15000 // (n + 1)
         size = step * 2
     else:
         step = 15000 // n
         size = step
-    endpoints = [(a := step * i, a + size) for i in range(n)]
+    endpoints = [(a := first_time + step * i, a + size) for i in range(n)]
     times = [
-        (milliseconds > tmin) & (milliseconds <= tmax) for (tmin, tmax) in endpoints
+        (milliseconds >= tmin) & (milliseconds < tmax) for (tmin, tmax) in endpoints
     ]
     frames = [
         pd.concat(
