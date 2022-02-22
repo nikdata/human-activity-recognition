@@ -24,9 +24,10 @@ from .load_data import load_data
 # this will be populated by the decorator
 feature_generators = []
 window_features = []
+undirected_features = []
 
 
-def make_features(*args, use_data=None,  **kwargs):
+def make_features(*args, use_data=None, **kwargs):
     """make every feature available as a data frame. This may take a while to run.
 
     Those features which make sense to apply to windows have their column name prepended with
@@ -36,7 +37,7 @@ def make_features(*args, use_data=None,  **kwargs):
     
     Parameters
     ----------
-    use_acceleration: optional, acceleration or None
+    use_data: optional, acceleration or None
         optionally pass the accekeration data to use directly.
     """
     if use_data is None:
@@ -53,6 +54,38 @@ def make_features(*args, use_data=None,  **kwargs):
     ]
     return pd.concat(feat, axis="columns")
 
+def make_undirected(acceleration):
+    """Make only those features which we can apply to sensor data with unknown/unreliable
+    orientation. Since only a reduced time frame is typically available, we should also exclude
+    data points which are more than four seconds away from the incident.
+    
+    Prameters
+    ----------
+    acceleration: DataFrame[['incident_id', 'milliseconds'], ['x', 'y', 'z']]
+        the acceleration data to use. The timing must be event-centered
+    """
+    # look only at the previous and future 4 seconds
+    a = acceleration[ abs(accelration.index.droplevel(0)) <= 4000 ]
+    t = accelration.index.droplevel(0)
+    m = magnitude(a)
+    d = direction(a)
+    portions = [('beginning', t<-1000), ('middle', (-1000 <= t) & (t <= 1000)), ('end', t>1000)]
+    feat = (
+        undirected_window(a, b, d, t, name)
+        for name, t in portions
+    )
+    return pd.concat(feat, axis="columns")
+
+def undirected_window(a, m, d, t, name):
+    a = a[t]
+    m = m[t]
+    d = d[t]
+    feat = (
+        f(magnitude=m, direction=d, acceleration=a) 
+        for f in undirected_features
+    )
+    return pd.concat(feat, axis='columns').rename(columns = lambda col: f'{name} {col}')
+
 
 def feature(func):
     feature_generators.append(func)
@@ -63,7 +96,12 @@ def window(func):
     window_features.append(func)
     return func
 
+def undirected(func):
+    undirected_features.append(func)
+    return func
 
+
+@undirected
 @window
 @feature
 def simple_stats(magnitude, **kwargs):
@@ -101,6 +139,7 @@ def simple_stats(magnitude, **kwargs):
     )
 
 
+@undirected
 @window
 @feature
 def total_variation(magnitude, **kwargs):
@@ -201,6 +240,7 @@ def stillness(magnitude, rest_time=1000, **kwargs):
     )
 
 
+@undirected
 @window
 @feature
 def angle_path(direction, **kwargs):
@@ -255,6 +295,7 @@ def angle_path(direction, **kwargs):
     )
 
 
+@undirected
 @feature
 def angle_between_incident_and_vertical(acceleration, direction, **kwargs):
     """
@@ -269,6 +310,7 @@ def angle_between_incident_and_vertical(acceleration, direction, **kwargs):
     return pd.DataFrame({"angle between incident and vertical": angle})
 
 
+@undirected
 @window
 @feature
 def spectral_power(magnitude, low_threshold=0.5, high_threshold=2, **kwargs):
