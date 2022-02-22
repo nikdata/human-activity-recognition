@@ -63,13 +63,13 @@ def make_undirected(acceleration):
         the acceleration data to use. The timing must be event-centered
     """
     # look only at the previous and future 4 seconds
-    a = acceleration[ abs(accelration.index.droplevel(0)) <= 4000 ]
-    t = accelration.index.droplevel(0)
+    a = acceleration[ abs(acceleration.index.droplevel(0)) <= 4000 ]
+    t = a.index.droplevel(0)
     m = magnitude(a)
     d = direction(a)
     portions = [('beginning', t<-1000), ('middle', (-1000 <= t) & (t <= 1000)), ('end', t>1000)]
     feat = (
-        undirected_window(a, b, d, t, name)
+        undirected_window(a, m, d, t, name)
         for name, t in portions
     )
     return pd.concat(feat, axis="columns")
@@ -293,7 +293,6 @@ def angle_path(direction, **kwargs):
     )
 
 
-@undirected
 @feature
 def angle_between_incident_and_vertical(acceleration, direction, **kwargs):
     """
