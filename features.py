@@ -44,8 +44,6 @@ def make_features(*args, use_data=None, **kwargs):
         i, a = load_data(*args, **kwargs)
     else:
         a = use_data
-    # look only at the previous and future 4 seconds
-    a = a[ abs(a.index.droplevel(0)) <= 4000 ]
     m = magnitude(a)
     d = direction(a)
     feat = [
@@ -341,14 +339,28 @@ def spectral_power(magnitude, low_threshold=0.5, high_threshold=2, **kwargs):
 
 
 @feature
-def windows(magnitude, direction, acceleration, bounds = [-4000, -1000, 1040, 4040], **kwargs):
+def windows(magnitude, direction, acceleration, n=5, overlap=True, **kwargs):
     """
-    Repeat all marked features across the three windows (before, during, and after).
+    Repeat all the marked features on each of `n` evenly spaced windows.
+    If overlap, they are overlapped evenly, like so:
+
+        |-------|-------|-------|
+            |-------|-------|
+
+    The resulting frames are tagged by their end points, with the lower
+    left endtime noninclusive. This matches the convention that the first
+    measurement is given time 40 milliseconds.
     """
     milliseconds = magnitude.index.to_frame()["milliseconds"]
-    endpoints = [bounds[i:i+2] for i in range(3)]
+    if overlap:
+        step = 15000 // (n + 1)
+        size = step * 2
+    else:
+        step = 15000 // n
+        size = step
+    endpoints = [(a := step * i, a + size) for i in range(n)]
     times = [
-        (milliseconds >= tmin) & (milliseconds < tmax) for (tmin, tmax) in endpoints
+        (milliseconds > tmin) & (milliseconds <= tmax) for (tmin, tmax) in endpoints
     ]
     frames = [
         pd.concat(
@@ -364,9 +376,9 @@ def windows(magnitude, direction, acceleration, bounds = [-4000, -1000, 1040, 40
         )
         for t in times
     ]
-    for windowname, frame in zip(['before', 'during', 'after'], frames):
+    for (tmin, tmax), frame in zip(endpoints, frames):
         frame.rename(
-            columns=lambda name: f"window {windowname} {name}",
+            columns=lambda name: f"window {tmin}:{tmax} {name}",
             inplace=True,
         )
     return pd.concat(frames, axis="columns")
