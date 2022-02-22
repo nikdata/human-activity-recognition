@@ -27,11 +27,14 @@ dates = ["occurrence_ts", "confirmation_ts"]
 default_filename = (
     "/depot/tdm-musafe/data/human-activity-recognition/raw-data/har_raw.gz"
 )
+testing_filename = (
+    "/depot/tdm-musafe/data/human-activity-recognition/raw-data/har-test-data-raw.gz"
+)
 
 cache_file = "/depot/tdm-musafe/data/cache.pickle"
 
 
-def load_data(filename=default_filename, *, drop_batches=True, drop_early=False, redo_cache=False, no_cache=False, include_features=False):
+def load_data(filename=default_filename, *, drop_batches=True, drop_early=False, redo_cache=False, no_cache=False, include_features=False, test_data=False):
     """Load the makusafe data and make them available as DataFrames.
 
     In order to keep the data in third normal form (without redundant columns),
@@ -62,6 +65,9 @@ def load_data(filename=default_filename, *, drop_batches=True, drop_early=False,
         
     include_features: bool, optional
         Include the features from the cache, with index aligned to the data chosen.
+        
+    test_data: bool, optional
+        use the test data instead of the training data.
 
     Returns
     -------
@@ -78,6 +84,10 @@ def load_data(filename=default_filename, *, drop_batches=True, drop_early=False,
     >>> list(acceleration.index.names)
     ['incident_id', 'milliseconds']
     """
+    if test_data:
+        filename = testing_filename
+    if filename != default_filename:
+        no_cache = True
     if redo_cache or no_cache:
         raw_data = pd.read_csv(filename, dtype=dtype, parse_dates=dates)
         raw_data['milliseconds'] -= 7520
@@ -119,7 +129,12 @@ def load_data(filename=default_filename, *, drop_batches=True, drop_early=False,
         incidents[col] = incidents[col].cat.remove_unused_categories()
     acceleration = acceleration.loc[mask[mask].index]
     if include_features:
-        features = pd.read_csv('/depot/tdm-musafe/data/features.csv', index_col = 'incident_id')[mask]
+        if no_cache:
+            # prevents a circular import, and this is not a typical use case
+            from .features import make_features
+            features = make_features(use_data = acceleration)
+        else:
+            features = pd.read_csv('/depot/tdm-musafe/data/features.csv', index_col = 'incident_id')[mask]
         return incidents, acceleration, features
     else:
         return incidents, acceleration
