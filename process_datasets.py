@@ -16,7 +16,10 @@ def write_data(path = '/depot/tdm-musafe/data/other_datasets/'):
     """
     Specify the folder in which to write the datasets.
     """
-    stream = itertools.chain(progressbar(sis_fall(), max_value=4505, prefix='SisFall'), )
+    stream = itertools.chain(
+        progressbar(sis_fall(), max_value=4505, prefix='SisFall'), 
+        progressbar(erciyes(), max_value=3326, prefix='Erciyes'),
+    )
     all_data = pd.concat(stream)
     incidents = all_data['motion'].groupby('incident_id').first()
     acceleration = all_data['x y z'.split()]
@@ -49,6 +52,36 @@ def sis_fall(incident_threshold = 1.775, time_threshold = 4000):
 
         yield process_event(acceleration, incident_id, motion, sample_rate, incident_threshold, time_threshold)
 
+        
+def erciyes(incident_threshold = 1.33, time_threshold = 4000):
+    """Load the Erciyes dataset (available from https://archive.ics.uci.edu/ml/datasets/Simulated+Falls+and+Daily+Living+Activities+Data+Set)
+    This dataset is published under a creative commons attribution licence, so it should be fine to use in a commercial
+    product provided attribution is given.
+    
+    The default incident threshold and time threshold are based off of the paper at
+    https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8272179/
+    """
+    erciyes_testno_person = re.compile(r"/depot/tdm-musafe/data/other_datasets/ErciyesUni/Tests/(.*)/Testler Export/(.*)/340527.txt")
+    sample_rate = 25
+    
+    for path in glob.iglob("/depot/tdm-musafe/data/other_datasets/ErciyesUni/Tests/*/Testler Export/*/*/340527.txt"):
+        df = pd.read_csv(path, sep='\t', skiprows=4, usecols=['Acc_X', 'Acc_Y', 'Acc_Z']) / 9.81
+        df.columns = ['x', 'y', 'z']
+
+        testnumber, person = erciyes_testno_person.match(path).groups()
+        action = person[:3]
+
+        if action in ['808', '809']:
+            motion = 'trip'
+        elif action[0] == '9':
+            motion = 'fall'
+        else:
+            motion = 'other'
+
+        incident_id = 'erciyes_'+testnumber + '-' + person.replace('/', '-')
+
+        yield process_event(df, incident_id, motion,  sample_rate, incident_threshold, time_threshold)
+        
 
 def process_event(acceleration, incident_id, motion, sample_rate, incident_threshold, time_threshold):
     """
@@ -84,7 +117,12 @@ def process_event(acceleration, incident_id, motion, sample_rate, incident_thres
         doubly indexed by incident_id, then by milliseconds, with 0 corresponding to the incident
         trigger. A suffix is added to incident_id if there is more than one incident.
     """
-    a = pd.DataFrame(resample(acceleration, len(acceleration)*25//sample_rate), columns = 'x y z'.split())
+    if sample_rate == 25:
+        a = acceleration
+        a.columns = 'x y z'.split()
+        a.reset_index(inplace = True, drop = True)
+    else:
+        a = pd.DataFrame(resample(acceleration, len(acceleration)*25//sample_rate), columns = 'x y z'.split())
     a.index *= 40
     
     triggers = (a.abs() > incident_threshold).any(axis='columns')
