@@ -17,6 +17,7 @@ def write_data(path = '/depot/tdm-musafe/data/other_datasets/'):
     Specify the folder in which to write the datasets.
     """
     stream = itertools.chain(
+        progressbar(fallalld(), max_value=2515, prefix='FallAllD'),
         progressbar(sis_fall(), max_value=4505, prefix='SisFall'), 
         progressbar(erciyes(), max_value=3326, prefix='Erciyes'),
     )
@@ -84,6 +85,37 @@ def erciyes(incident_threshold = 1.33, time_threshold = 4000):
         yield process_event(df, incident_id, motion,  sample_rate, incident_threshold, time_threshold)
         
 
+def fallalld(incident_threshold = 2.36, time_threshold = 4000):
+    """Load the FallAllD dataset (available from https://ieee-dataport.org/open-access/fallalld-comprehensive-dataset-human-falls-and-activities-daily-living)
+    This dataset is published under a creative commons attribution licence, so it should be fine to use in a commercial
+    product provided attribution is given.
+    
+    The default incident threshold and time threshold are based off of the paper at
+    https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8272179/
+    """    
+    fallalld = pd.read_pickle('data/other_datasets/FallALLD/FallAllD.pkl')
+    wrists = fallalld[fallalld['Device'] == 'Wrist'].reset_index(drop = True)
+    
+    sample_rate = 238
+    for i, entry in wrists.iterrows():
+        subject_id, device, activity_id, trial_no, acc, *rest = entry
+
+        acc = acc * 0.000244
+
+        incident_id = f'FallAllD_S{subject_id}_A{activity_id}_T{trial_no}'
+
+        if activity_id in [101, 102, 121, 122]:
+            motion = 'trip'
+        elif 103 <= activity_id <= 110 or 123 <= activity_id <= 126:
+            motion = 'slip'
+        elif 100 <= activity_id <= 135:
+            motion = 'fall'
+        else:
+            motion = 'other'
+
+        yield process_event(acc, incident_id, motion, sample_rate, incident_threshold, time_threshold)
+
+        
 def process_event(acceleration, incident_id, motion, sample_rate, incident_threshold, time_threshold):
     """
     Put the acceleration data into a standard form.
