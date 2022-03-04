@@ -21,6 +21,7 @@ def write_data(path = '/depot/tdm-musafe/data/other_datasets/'):
         progressbar(erciyes(), max_value=3326, prefix='Erciyes'),
     )
     all_data = pd.concat(stream)
+    all_data.sort_index(inplace = True)
     incidents = all_data['motion'].groupby('incident_id').first()
     acceleration = all_data['x y z'.split()]
     incidents.to_csv(path + 'incidents.csv')
