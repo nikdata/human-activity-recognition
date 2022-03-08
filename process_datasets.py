@@ -81,8 +81,10 @@ def erciyes(incident_threshold = 1.33, time_threshold = 4000):
             motion = 'other'
 
         incident_id = 'erciyes_'+testnumber + '-' + person.replace('/', '-')
-
-        yield process_event(df, incident_id, motion,  sample_rate, incident_threshold, time_threshold)
+        
+        event = process_event(df, incident_id, motion,  sample_rate, incident_threshold, time_threshold)
+        if not event.isna().any(axis=None):
+            yield event
         
 
 def fallalld(incident_threshold = 2.36, time_threshold = 4000):
