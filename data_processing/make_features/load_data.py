@@ -8,6 +8,8 @@ Alden Bradford, January 27 2022
 import numpy as np
 import pandas as pd
 import pickle
+import git
+import os
 from .transformations import batch
 
 dtype = {
@@ -24,14 +26,12 @@ dtype = {
 
 dates = ["occurrence_ts", "confirmation_ts"]
 
-default_filename = (
-    "/depot/tdm-musafe/data/human-activity-recognition/raw-data/har_raw.gz"
-)
-testing_filename = (
-    "/depot/tdm-musafe/data/human-activity-recognition/raw-data/har-test-data-raw.gz"
-)
+# find the root of the Git repository where this file lives.
+root = git.Repo(__file__, search_parent_directories=True).git.rev_parse("--show-toplevel")
 
-cache_file = "/depot/tdm-musafe/data/cache.pickle"
+default_filename = os.path.join(root, 'raw-data/har_raw.gz')
+testing_filename = os.path.join(root, 'raw-data/har-test-data-raw.gz')
+cache_file = os.path.join(root, 'data_processing/cache/cache.pickle')
 
 
 def load_data(filename=default_filename, *, drop_batches=True, drop_early=False, redo_cache=False, no_cache=False, include_features=False, test_data=False):
@@ -134,7 +134,7 @@ def load_data(filename=default_filename, *, drop_batches=True, drop_early=False,
             from .features import make_features
             features = make_features(use_data = acceleration)
         else:
-            features = pd.read_csv('/depot/tdm-musafe/data/features.csv', index_col = 'incident_id')[mask]
+            features = pd.read_csv(os.path.join(root, 'data_processing/cache/features.csv'), index_col = 'incident_id')[mask]
         return incidents, acceleration, features
     else:
         return incidents, acceleration
